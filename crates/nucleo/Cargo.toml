@@ -1,0 +1,18 @@
+[package]
+name = "zerostudy-nucleo"
+description = "Núcleo de ZeroStudy: modelo, repaso espaciado, sincronización y lector de la bóveda"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+default = []
+# Lector de la bóveda de Obsidian (solo escritorio: usa el sistema de archivos)
+boveda = ["dep:sha1"]
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+regex-lite = "0.1"
+sha1 = { version = "0.10", optional = true }

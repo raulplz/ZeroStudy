@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = ["crates/nucleo", "crates/ui", "src-tauri"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Raúl (raulplz)"]
+repository = "https://github.com/raulplz/ZeroStudy"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", default-features = false, features = ["alloc", "serde"] }
+
+[profile.release]
+lto = true
+opt-level = "s"
+codegen-units = 1

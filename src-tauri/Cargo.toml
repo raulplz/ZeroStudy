@@ -1,0 +1,26 @@
+[package]
+name = "zerostudy-app"
+description = "ZeroStudy: app de escritorio (Tauri 2) para repasar, explorar el atlas y seguir plazos sobre tus apuntes."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+default-run = "zerostudy"
+
+[[bin]]
+name = "zerostudy"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2.7", features = [] }
+
+[dependencies]
+tauri = { version = "2.12", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-single-instance = "2"
+serde.workspace = true
+serde_json.workspace = true
+zerostudy-nucleo = { path = "../crates/nucleo", features = ["boveda"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls", "json"] }
+base64 = "0.22"
+sha1 = "0.10"

@@ -1,0 +1,24 @@
+[package]
+name = "zerostudy-ui"
+description = "Interfaz de ZeroStudy (Leptos, WebAssembly): la misma para escritorio (Tauri) y web/iPhone (PWA)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+zerostudy-nucleo = { path = "../nucleo" }
+leptos = { version = "0.8.23", features = ["csr"] }
+serde.workspace = true
+serde_json.workspace = true
+wasm-bindgen = "0.2.130"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+serde-wasm-bindgen = "0.6"
+pulldown-cmark = { version = "0.13", default-features = false, features = ["html"] }
+base64 = "0.22"
+web-sys = { version = "0.3", features = [
+  "Window", "Document", "Element", "HtmlElement", "HtmlInputElement", "HtmlTextAreaElement", "Storage",
+  "Location", "History", "KeyboardEvent", "MouseEvent", "WheelEvent", "PointerEvent", "DomRect",
+  "Headers", "Request", "RequestInit", "RequestMode", "Response", "CssStyleDeclaration", "Navigator",
+  "ServiceWorkerContainer", "StorageManager"
+] }
