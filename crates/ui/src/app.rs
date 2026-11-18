@@ -202,7 +202,7 @@ pub fn App() -> impl IntoView {
         if let Some(raiz) = document().document_element() {
             let raiz: web_sys::HtmlElement = wasm_bindgen::JsCast::unchecked_into(raiz);
             let estilo = raiz.style();
-            for (k, v) in t.variables_css() {
+            for (k, v) in zerostudy_nucleo::tema::variables_css(&t) {
                 let _ = estilo.set_property(k, &v);
             }
         }
@@ -243,7 +243,13 @@ fn Armazon() -> impl IntoView {
     let vista = move || c.ruta.with(|r| r.split('?').next().unwrap_or("panel").to_string());
     let enlace = move |id: &'static str, nombre: &'static str, icono: &'static str| {
         view! {
-            <a href=format!("#/{id}") class:activa=move || vista() == id>
+            <a href=format!("#/{id}") class:activa=move || vista() == id on:click=move |_| {
+                // En la pantalla final de una sesión la ruta ya es «#/repaso»: el hash no cambia, no salta
+                // `hashchange` y la vista seguiría igual. Al pulsar «Repaso» se vuelve al selector.
+                if id == "repaso" && c.repaso.with_untracked(|s| s.as_ref().is_some_and(|s| s.i >= s.cola.len())) {
+                    c.repaso.set(None);
+                }
+            }>
                 <span class="icono" inner_html=icono></span>
                 <span>{nombre}</span>
                 {(id == "repaso").then(|| view! {

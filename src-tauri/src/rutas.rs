@@ -22,9 +22,6 @@ pub fn config() -> PathBuf {
 pub fn plantilla() -> PathBuf {
     config_dir().join("zerostudy/plantilla.json")
 }
-pub fn tema() -> PathBuf {
-    config_dir().join("zerolayer/theme.json")
-}
 pub fn datos() -> PathBuf {
     xdg("XDG_DATA_HOME", ".local/share").join("zerostudy")
 }

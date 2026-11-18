@@ -170,10 +170,15 @@ def repaso(page, etiqueta):
     sin_desborde(page, "repaso final")
     registros = json.loads(page.evaluate("() => localStorage.getItem('zerostudy-registros')"))
     comprobar(sum(len(r["eventos"]) for r in registros) >= 18, "repaso: guarda los eventos en el navegador al instante")
+    # «Repaso» del menú en la pantalla final: la ruta no cambia y debe volver igualmente al selector.
+    page.locator("a[href='#/repaso']").first.click()
+    page.wait_for_selector("text=Empezar sesión", timeout=5000)
+    comprobar(page.locator(".resumen-final").count() == 0, "repaso: «Repaso» del menú en la pantalla final vuelve al selector")
 
 
 def simulacro(page, gh, etiqueta):
-    page.click("button:has-text('Otra sesión')")
+    if page.locator("button:has-text('Otra sesión')").count():
+        page.click("button:has-text('Otra sesión')")
     page.wait_for_selector("text=Empezar sesión")
     page.click(".chip:has-text('Simulacro')")
     page.click(".chip:has-text('40')")

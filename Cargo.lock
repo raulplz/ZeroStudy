@@ -6166,6 +6166,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85ccff8a4805aba1eaa4cd4afcd49f7557dd2cf5fd79ffc37f8959466effc5aa"
 
 [[package]]
+name = "zerolayer-theme"
+version = "0.3.1"
+source = "git+https://github.com/raulplz/ZeroLayer?tag=v0.3.1#1a0b3fd05e50d410225550e90d8379310a5ddbdd"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "zerostudy-app"
 version = "0.1.0"
 dependencies = [
@@ -6179,6 +6188,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-opener",
  "tauri-plugin-single-instance",
+ "zerolayer-theme",
  "zerostudy-nucleo",
 ]
 
@@ -6191,6 +6201,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha1",
+ "zerolayer-theme",
 ]
 
 [[package]]

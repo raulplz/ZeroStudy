@@ -94,10 +94,6 @@ fn leer_registros() -> Vec<Registro> {
     v
 }
 
-fn leer_tema() -> Option<Tema> {
-    fs::read_to_string(rutas::tema()).ok().and_then(|t| serde_json::from_str(&t).ok())
-}
-
 /// Lee los apuntes (y guarda copia) o, si esta carpeta no existe en este equipo, usa el contenido sincronizado.
 fn cargar_contenido(cfg: &Config) -> Result<Contenido, String> {
     if Path::new(&cfg.boveda).is_dir() {
@@ -167,7 +163,7 @@ async fn cargar(app: Compartido<'_>) -> Result<Carga, String> {
         if let Some(c) = &contenido {
             escribir_derivados(&config, c, &registros);
         }
-        Carga { config, contenido, registros, tema: leer_tema(), aviso, sugerencia, plantilla }
+        Carga { config, contenido, registros, tema: Some(Tema::load()), aviso, sugerencia, plantilla }
     })
     .await
     .map_err(|e| e.to_string())
@@ -299,17 +295,14 @@ fn firma_ajenos(propio: &str) -> Vec<(String, Option<SystemTime>)> {
 
 /// Cada 2 s: avisa a la interfaz si cambió el tema de ZeroLayer o el progreso de otro dispositivo.
 fn vigilar(handle: AppHandle) {
+    let para_tema = handle.clone();
+    zerolayer_theme::watch(Duration::from_secs(2), move |tema| {
+        let _ = para_tema.emit("tema", &tema);
+    });
     thread::spawn(move || {
-        let (mut tema, mut ajenos) = (modificado(&rutas::tema()), firma_ajenos(&leer_config().0.dispositivo));
+        let mut ajenos = firma_ajenos(&leer_config().0.dispositivo);
         loop {
             thread::sleep(Duration::from_secs(2));
-            let t = modificado(&rutas::tema());
-            if t != tema {
-                tema = t;
-                if let Some(x) = leer_tema() {
-                    let _ = handle.emit("tema", &x);
-                }
-            }
             let f = firma_ajenos(&leer_config().0.dispositivo);
             if f != ajenos {
                 ajenos = f;
