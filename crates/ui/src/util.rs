@@ -83,11 +83,7 @@ pub fn md_linea(s: &str) -> String {
 
 pub fn uri_obsidian(boveda: &str, ruta: &str) -> String {
     let ruta = ruta.strip_suffix(".md").unwrap_or(ruta);
-    format!(
-        "obsidian://open?vault={}&file={}",
-        js_sys::encode_uri_component(boveda),
-        js_sys::encode_uri_component(ruta)
-    )
+    format!("obsidian://open?vault={}&file={}", js_sys::encode_uri_component(boveda), js_sys::encode_uri_component(ruta))
 }
 
 pub fn barajar<T>(v: &mut [T]) {
@@ -140,11 +136,25 @@ pub fn coma(x: f64) -> String {
     format!("{x:.1}").replace('.', ",")
 }
 
+/// «1 día» / «n días».
+pub fn dias(n: i64) -> String {
+    if n == 1 {
+        "1 día".into()
+    } else {
+        format!("{n} días")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
     fn wikilinks() {
         assert_eq!(sin_wikilinks("ver [[Unit 16 - Sesión 1#A|la sesión]] y [[Otra]]"), "ver la sesión y Otra");
+    }
+
+    #[test]
+    fn dias_en_singular_y_plural() {
+        assert_eq!((dias(0).as_str(), dias(1).as_str(), dias(2).as_str()), ("0 días", "1 día", "2 días"));
     }
 }

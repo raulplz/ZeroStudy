@@ -105,15 +105,22 @@ pub fn Atlas() -> impl IntoView {
     let (nodos, lados) = construir(&datos);
     let nodos = Arc::new(nodos);
     let n_puentes = lados.iter().filter(|l| l.cruzada).count();
-    let lado_txt = vec![
-        format!("{} CONCEPTOS · {} RELACIONES", nodos.len(), lados.len()),
-        format!("{n_puentes} PUENTES ENTRE ASIGNATURAS"),
-    ];
+    let lado_txt = vec![format!("{} CONCEPTOS · {} RELACIONES", nodos.len(), lados.len()), format!("{n_puentes} PUENTES ENTRE ASIGNATURAS")];
 
     let caja = NodeRef::<Div>::new();
     // (tx, ty, k)
     let vista = RwSignal::new((0.0f64, 0.0f64, 1.0f64));
-    let nivel = Memo::new(move |_| vista.with(|v| if v.2 > 1.6 { 2u8 } else if v.2 > 1.05 { 1 } else { 0 }));
+    let nivel = Memo::new(move |_| {
+        vista.with(|v| {
+            if v.2 > 1.6 {
+                2u8
+            } else if v.2 > 1.05 {
+                1
+            } else {
+                0
+            }
+        })
+    });
     let buscar = RwSignal::new(String::new());
     let q = Memo::new(move |_| normalizar(buscar.get().trim()));
     let ocultas = RwSignal::new(Vec::<String>::new());
@@ -324,7 +331,13 @@ pub fn Atlas() -> impl IntoView {
             let rel = |otro: String, saliente: bool, tipo: &str, etiqueta: &str, cruzada: bool| {
                 let verbo_txt = if etiqueta.is_empty() { verbo(tipo).to_string() } else { etiqueta.to_string() };
                 let (nombre, u2) = (nombre_de(&otro), unidad_de(&otro));
-                let flecha = if cruzada { "⇄ " } else if saliente { "→ " } else { "← " };
+                let flecha = if cruzada {
+                    "⇄ "
+                } else if saliente {
+                    "→ "
+                } else {
+                    "← "
+                };
                 let c2 = color_unidad(&d, &u2);
                 view! {
                     <span class="rel" role="button" on:click=move |_| abrir.run(otro.clone())>

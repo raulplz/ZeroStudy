@@ -390,7 +390,8 @@ fn opcion_vista(o: Opcion, clase: &'static str, deshabilitada: bool, al_pulsar: 
 fn TarjetaVista(s: Sesion) -> impl IntoView {
     let c = ctx();
     let Some(p) = pregunta(&c, &s.cola[s.i]) else { return view! { <div class="vacio">"Pregunta no encontrada"</div> }.into_any() };
-    let (color, corto) = c.contenido.with_untracked(|x| x.as_ref().and_then(|x| x.unidad(&p.unidad)).map(|u| (u.color.clone(), u.corto.clone())).unwrap_or_default());
+    let (color, corto) =
+        c.contenido.with_untracked(|x| x.as_ref().and_then(|x| x.unidad(&p.unidad)).map(|u| (u.color.clone(), u.corto.clone())).unwrap_or_default());
     let boveda = c.contenido.with_untracked(|x| x.as_ref().map(|x| x.boveda.clone()).unwrap_or_default());
     let uri = util::uri_obsidian(&boveda, &p.ruta);
     let ops = opciones::parsear(&p.opciones);
@@ -403,7 +404,11 @@ fn TarjetaVista(s: Sesion) -> impl IntoView {
         let inicio = s.inicio;
         let tic = RwSignal::new(0u32);
         let h = set_interval_with_handle(move || tic.update(|x| *x += 1), Duration::from_secs(1)).ok();
-        on_cleanup(move || if let Some(h) = h { h.clear() });
+        on_cleanup(move || {
+            if let Some(h) = h {
+                h.clear()
+            }
+        });
         let reloj = move || {
             tic.get();
             let t = ((ms() - inicio) / 1000.0) as u32;
@@ -453,11 +458,16 @@ fn TarjetaVista(s: Sesion) -> impl IntoView {
     });
     let respuesta = s.revelada.then(|| {
         let cab = if es_test {
-            if s.elegida == correcta { "✓ CORRECTO".to_string() } else { format!("✕ ERA LA {}", correcta.unwrap_or('?').to_ascii_uppercase()) }
+            if s.elegida == correcta {
+                "✓ CORRECTO".to_string()
+            } else {
+                format!("✕ ERA LA {}", correcta.unwrap_or('?').to_ascii_uppercase())
+            }
         } else {
             "RESPUESTA".into()
         };
-        let mia = (!s.explicacion.trim().is_empty()).then(|| view! { <div class="mi-explicacion"><div class="k">"TU EXPLICACIÓN"</div><div>{s.explicacion.clone()}</div></div> });
+        let mia = (!s.explicacion.trim().is_empty())
+            .then(|| view! { <div class="mi-explicacion"><div class="k">"TU EXPLICACIÓN"</div><div>{s.explicacion.clone()}</div></div> });
         view! { {mia}<div class="respuesta"><div class="k">{cab}</div><div class="md" inner_html=md(&p.respuesta)></div></div> }
     });
     let feynman_v = (feynman && !s.revelada).then(|| {
@@ -472,7 +482,8 @@ fn TarjetaVista(s: Sesion) -> impl IntoView {
         if es_test {
             view! { <span class="atajos">"PULSA A–D O HAZ CLIC"</span> }.into_any()
         } else {
-            view! { <button class="boton" on:click=move |_| revelar(c)>{if feynman { "Comparar " } else { "Mostrar respuesta " }}<kbd>"Espacio"</kbd></button> }.into_any()
+            view! { <button class="boton" on:click=move |_| revelar(c)>{if feynman { "Comparar " } else { "Mostrar respuesta " }}<kbd>"Espacio"</kbd></button> }
+                .into_any()
         }
     } else if fallo {
         view! { <button class="boton" on:click=move |_| responder(c, 1)>"Siguiente " <kbd>"Enter"</kbd></button> }.into_any()
@@ -526,23 +537,30 @@ fn Fin(s: Sesion) -> impl IntoView {
     let falladas: Vec<Pregunta> = primeras.iter().filter(|(_, n)| *n == 1).filter_map(|(id, _)| pregunta(&c, id)).collect();
     let racha = c.estado.with_untracked(|e| e.racha(&hoy()));
     // Mapas conceptuales: propone un concepto relacionado con lo que más ha fallado.
-    let concepto = c.metodo("mapas").then(|| {
-        c.contenido.with_untracked(|x| {
-            let x = x.as_ref()?;
-            let p = falladas.first().or_else(|| primeras.first().and_then(|(id, _)| x.pregunta(id)))?;
-            x.conceptos.nodos.iter().find(|k| k.unidad == p.unidad && (k.nota == p.nota || p.pregunta.to_lowercase().contains(&k.nombre.to_lowercase()))).cloned()
+    let concepto = c
+        .metodo("mapas")
+        .then(|| {
+            c.contenido.with_untracked(|x| {
+                let x = x.as_ref()?;
+                let p = falladas.first().or_else(|| primeras.first().and_then(|(id, _)| x.pregunta(id)))?;
+                x.conceptos
+                    .nodos
+                    .iter()
+                    .find(|k| k.unidad == p.unidad && (k.nota == p.nota || p.pregunta.to_lowercase().contains(&k.nombre.to_lowercase())))
+                    .cloned()
+            })
         })
-    }).flatten();
+        .flatten();
     view! {
         <div class="tarjeta-zona"><div class="panel brillo resumen-final">
             <div class="mono pre-acento">"SESIÓN COMPLETADA"</div>
-            <div class="grande">{format!("{}%", if total > 0 { 100 * bien / total } else { 0 })}</div>
-            <div class="tenue">{format!("{bien} de {total} a la primera · {} respuestas en total · racha de {racha} días", s.resultados.len())}</div>
+            <div class="grande">{format!("{}%", (100 * bien).checked_div(total).unwrap_or(0))}</div>
+            <div class="tenue">{format!("{bien} de {total} a la primera · {} respuestas en total · racha de {}", s.resultados.len(), crate::util::dias(racha as i64))}</div>
             {(!falladas.is_empty()).then(|| view! {
                 <ul class="lista-falladas">{falladas.into_iter().map(|p| view! { <li inner_html=md_linea(&p.pregunta)></li> }).collect_view()}</ul>
             })}
             {concepto.map(|k| { let id = k.id.clone(); view! {
-                <div class="panel sugerencia">"⌬ Para cerrar, mira cómo encaja " <a href=format!("#/atlas?c={id}")>{k.nombre.clone()}</a> " en el atlas."</div>
+                <div class="panel sugerencia"><span>"⌬ Para cerrar, mira cómo encaja " <a href=format!("#/atlas?c={id}")>{k.nombre.clone()}</a> " en el atlas."</span></div>
             }})}
             <div class="acciones-centro">
                 <button class="boton" on:click=move |_| c.repaso.set(None)>"▶ Otra sesión"</button>
@@ -558,7 +576,13 @@ fn FinSimulacro(s: Sesion) -> impl IntoView {
     let n = s.respuestas.len();
     let ok = s.respuestas.iter().filter(|r| r.2).count();
     let nota = if n > 0 { 10.0 * ok as f64 / n as f64 } else { 0.0 };
-    let color = if nota >= 7.0 { "var(--verde)" } else if nota >= 5.0 { "var(--ambar)" } else { "var(--rojo)" };
+    let color = if nota >= 7.0 {
+        "var(--verde)"
+    } else if nota >= 5.0 {
+        "var(--ambar)"
+    } else {
+        "var(--rojo)"
+    };
     let t = ((s.fin.unwrap_or_else(ms) - s.inicio) / 1000.0) as u32;
     let boveda = c.contenido.with_untracked(|x| x.as_ref().map(|x| x.boveda.clone()).unwrap_or_default());
     let mal: Vec<(Pregunta, char)> = s.respuestas.iter().filter(|r| !r.2).filter_map(|r| Some((pregunta(&c, &r.0)?, r.1))).collect();

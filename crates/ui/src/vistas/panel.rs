@@ -41,7 +41,7 @@ pub fn Panel() -> impl IntoView {
                     view! {
                         <div class="panel banner" style="--c:var(--ambar)">
                             <span class="icono-banner">"⏱"</span>
-                            <div><b>{format!("{} en {d} días", p.que)}</b><div class="tenue">"Práctica de recuperación: un simulacro cronometrado ahora vale más que releer."</div></div>
+                            <div><b>{format!("{} en {}", p.que, crate::util::dias(d))}</b><div class="tenue">"Práctica de recuperación: un simulacro cronometrado ahora vale más que releer."</div></div>
                             <button class="boton" on:click=move |_| {
                                 c.cfg_repaso.set(crate::repaso::Cfg { unidades: vec![u.clone()], modo: "simulacro", tipo: "todas", n: 20 });
                                 crate::repaso::empezar(c, None);
@@ -87,7 +87,7 @@ pub fn Panel() -> impl IntoView {
                     <div class="panel dato principal"><div class="k">"Para repasar hoy"</div><div class="v">{r.pendientes}<small>"tarjetas"</small></div>
                         <div class="s">{format!("{} nuevas sin estrenar", r.nuevas)}</div>
                         <div class="mt"><a class="boton" href="#/repaso?auto=hoy">"▶ Empezar"</a></div></div>
-                    <div class="panel dato"><div class="k">"Racha"</div><div class="v">{e.racha(&h)}<small>"días"</small></div><div class="s">{format!("{} días con repaso en total", e.por_dia.len())}</div></div>
+                    <div class="panel dato"><div class="k">"Racha"</div><div class="v">{e.racha(&h)}<small>"días"</small></div><div class="s">{format!("{} con repaso en total", crate::util::dias(e.por_dia.len() as i64))}</div></div>
                     <div class="panel dato"><div class="k">"Dominadas"</div><div class="v">{r.dominadas}<small>{format!("/ {}", r.total)}</small></div><div class="s">{format!("{} % del banco de preguntas", pct(r.dominio()))}</div></div>
                     <div class="panel dato"><div class="k">"Próximo plazo"</div>{match prox {
                         Some((d, p)) => view! { <div class="v" class:rojo={d <= 7}>{d}<small>"días"</small></div><div class="s">{format!("{} · {}", p.unidad, p.que)}</div> }.into_any(),

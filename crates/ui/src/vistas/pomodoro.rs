@@ -23,7 +23,11 @@ pub fn Pomodoro() -> impl IntoView {
         Duration::from_secs(1),
     )
     .ok();
-    on_cleanup(move || if let Some(h) = h { h.clear() });
+    on_cleanup(move || {
+        if let Some(h) = h {
+            h.clear()
+        }
+    });
     view! {
         <div class="pomodoro" class:descanso=move || !foco.get()>
             <div class="k">{move || if foco.get() { "◔ FOCO" } else { "◔ DESCANSO" }}</div>

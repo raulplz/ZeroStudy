@@ -94,7 +94,7 @@ h2.seccion b { color: var(--acento); font-weight: 600; }
 .panel.aviso { border-color: var(--ambar); color: var(--ambar); margin-bottom: 16px; }
 .rejilla-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .rejilla-2 { display: grid; grid-template-columns: 1.15fr 1fr; gap: 14px; }
-@media (max-width: 1150px) { .rejilla-4 { grid-template-columns: repeat(2, 1fr); } .rejilla-2 { grid-template-columns: 1fr; } }
+@media (max-width: 1150px) { .rejilla-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rejilla-2 { grid-template-columns: 1fr; } }
 
 .dato .k { font: 10.5px var(--mono); letter-spacing: .22em; color: var(--tenue); text-transform: uppercase; }
 .dato .v { font: 800 38px/1.1 var(--sans); color: var(--brillo); margin: 8px 0 4px; font-variant-numeric: tabular-nums; }
@@ -275,13 +275,13 @@ h2.seccion b { color: var(--acento); font-weight: 600; }
 
 /* metodologías */
 .metodos { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
-.metodo { display: flex; flex-direction: column; gap: 8px; }
+.metodo { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .metodo.on { border-color: color-mix(in srgb, var(--acento) 55%, var(--linea)); }
 .metodo-cab { display: flex; align-items: center; gap: 10px; }
 .metodo-cab h3 { margin: 0; font: 700 16px var(--sans); color: var(--brillo); flex: 1; }
 .metodo-icono { font-size: 20px; color: var(--acento); width: 24px; text-align: center; }
 .metodo-res { margin: 0; color: var(--texto); font-size: 14px; }
-.metodo-meta { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+.metodo-meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; justify-content: space-between; }
 .motivos { margin: 0; padding-left: 18px; color: var(--texto-2); font-size: 13px; }
 .metodo-app { font-size: 12.5px; color: var(--texto-2); }
 .metodo-app b { color: var(--acento); font-size: 10px; letter-spacing: .2em; font-weight: 600; }
@@ -329,7 +329,7 @@ h2.seccion b { color: var(--acento); font-weight: 600; }
   nav a .insignia { position: absolute; top: 2px; right: 10%; margin: 0; font-size: 9px; padding: 0 5px; }
   .vista { padding: 18px 16px 96px; }
   .cabecera h1 { font-size: 24px; } .cabecera .lado { text-align: left; }
-  .rejilla-4 { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .rejilla-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .dato .v { font-size: 30px; }
   .banner { grid-template-columns: auto 1fr; } .banner .boton { grid-column: 1 / -1; justify-content: center; }
   .tarjeta { padding: 20px 18px; } .tarjeta .pregunta { font-size: 19px; }
@@ -338,7 +338,8 @@ h2.seccion b { color: var(--acento); font-weight: 600; }
   .sesiones { grid-template-columns: repeat(7, 1fr); }
   .fila-tema { grid-template-columns: 40px 1fr auto; } .fila-tema .pista, .fila-tema .mono.tenue, .fila-tema .mono.brillo { display: none; }
   .objetivos { grid-template-columns: 1fr; }
-  .metodos { grid-template-columns: 1fr; }
+  .metodos { grid-template-columns: minmax(0, 1fr); }
+  .metodo-cab { flex-wrap: wrap; }
   .atlas { height: calc(100dvh - 230px); min-height: 380px; }
   .buscar { width: 100%; }
   .leyenda { display: none; }
@@ -348,3 +349,4 @@ h2.seccion b { color: var(--acento); font-weight: 600; }
   .kanji { font-size: 90vw; }
 }
 @media (max-width: 760px) { .plazo { grid-template-columns: 64px 1fr; } .plazo .etiqueta { grid-column: 2; justify-self: start; } }
+.acciones .mono { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
