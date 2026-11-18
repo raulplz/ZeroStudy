@@ -16,6 +16,5 @@ pub mod tema;
 #[cfg(feature = "boveda")]
 pub mod boveda;
 
-
 pub use modelo::*;
 pub use progreso::{Estado, Evento, Registro, Simulacro, Tarjeta};

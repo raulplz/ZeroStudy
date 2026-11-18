@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  comprobar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - name: Dependencias de sistema de Tauri
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libsoup-3.0-dev librsvg2-dev libayatana-appindicator3-dev patchelf
+      - name: Formato
+        run: cargo fmt --all -- --check
+      - name: Clippy (nativo)
+        run: cargo clippy --workspace --all-targets --features zerostudy-nucleo/boveda -- -D warnings
+      - name: Clippy (wasm)
+        run: cargo clippy -p zerostudy-ui -p zerostudy-nucleo --target wasm32-unknown-unknown --all-targets -- -D warnings
+      - name: Tests
+        run: cargo test --workspace --features zerostudy-nucleo/boveda

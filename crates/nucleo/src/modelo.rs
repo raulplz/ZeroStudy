@@ -174,18 +174,13 @@ impl Contenido {
     /// Preguntas que tratan un concepto: su nombre o un alias aparece en el enunciado
     /// (no en las opciones, para no enlazar por un distractor), o están en su misma sección.
     pub fn preguntas_de_concepto(&self, c: &Concepto) -> Vec<&Pregunta> {
-        let terminos: Vec<String> = std::iter::once(&c.nombre)
-            .chain(c.aliases.iter())
-            .map(|t| normalizar(t))
-            .filter(|t| t.chars().count() >= 3)
-            .collect();
+        let terminos: Vec<String> = std::iter::once(&c.nombre).chain(c.aliases.iter()).map(|t| normalizar(t)).filter(|t| t.chars().count() >= 3).collect();
         self.preguntas
             .iter()
             .filter(|p| p.unidad == c.unidad)
             .filter(|p| {
                 let enunciado = normalizar(&p.pregunta);
-                terminos.iter().any(|t| contiene_palabra(&enunciado, t))
-                    || (p.nota == c.nota && p.seccion == c.seccion)
+                terminos.iter().any(|t| contiene_palabra(&enunciado, t)) || (p.nota == c.nota && p.seccion == c.seccion)
             })
             .collect()
     }

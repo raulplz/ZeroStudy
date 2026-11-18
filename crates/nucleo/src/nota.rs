@@ -12,15 +12,7 @@ pub fn progreso(c: &Contenido, e: &Estado, hoy: &str) -> String {
     s += "| Asignatura | Preguntas | Vistas | Dominadas (caja ≥ 3) | Dominio |\n|---|---:|---:|---:|---:|\n";
     for u in &c.unidades {
         let r = e.resumen(c, hoy, |p| p.unidad == u.id);
-        s += &format!(
-            "| {} · {} | {} | {} | {} | {} % |\n",
-            u.id,
-            u.titulo,
-            r.total,
-            r.vistas,
-            r.dominadas,
-            (r.dominio() * 100.0).round()
-        );
+        s += &format!("| {} · {} | {} | {} | {} | {} % |\n", u.id, u.titulo, r.total, r.vistas, r.dominadas, (r.dominio() * 100.0).round());
     }
     let dias: Vec<&String> = e.por_dia.keys().collect();
     s += &format!("\nDías con repaso: **{}**", dias.len());
@@ -28,11 +20,8 @@ pub fn progreso(c: &Contenido, e: &Estado, hoy: &str) -> String {
         s += &format!(" (último: {u}) · racha actual: **{}**", e.racha(hoy));
     }
     s += "\n\n## Más falladas\n\n";
-    let mut falladas: Vec<(u32, &crate::Pregunta)> = c
-        .preguntas
-        .iter()
-        .filter_map(|p| e.tarjeta(&p.id).filter(|t| t.fallos > 0).map(|t| (t.fallos, p)))
-        .collect();
+    let mut falladas: Vec<(u32, &crate::Pregunta)> =
+        c.preguntas.iter().filter_map(|p| e.tarjeta(&p.id).filter(|t| t.fallos > 0).map(|t| (t.fallos, p))).collect();
     falladas.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.pregunta.cmp(&b.1.pregunta)));
     if falladas.is_empty() {
         s += "- Todavía nada.\n";

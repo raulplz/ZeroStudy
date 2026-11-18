@@ -258,7 +258,16 @@ mod tests {
 
     #[test]
     fn examenes_con_test_prioriza_recuperacion_y_espaciada() {
-        let a = Analisis { asignaturas: 4, de_clase: 4, preguntas: 369, preguntas_test: 150, conceptos: 180, relaciones: 308, plazo_mas_cercano: Some(7), ..Default::default() };
+        let a = Analisis {
+            asignaturas: 4,
+            de_clase: 4,
+            preguntas: 369,
+            preguntas_test: 150,
+            conceptos: 180,
+            relaciones: 308,
+            plazo_mas_cercano: Some(7),
+            ..Default::default()
+        };
         let r = recomendar(&a, Objetivo::Examenes);
         let top: Vec<&str> = r.iter().take(2).map(|x| x.id).collect();
         assert!(top.contains(&"recuperacion") && top.contains(&"espaciada"), "{top:?}");
@@ -269,5 +278,64 @@ mod tests {
     fn aprendizaje_propio_con_codigo_prioriza_practica() {
         let a = Analisis { asignaturas: 1, propias: 1, notas: 20, bloques_codigo: 60, ..Default::default() };
         assert_eq!(recomendar(&a, Objetivo::Proyectos)[0].id, "practica");
+    }
+
+    #[test]
+    fn recomendar_es_determinista_ordenado_y_cubre_el_catalogo() {
+        let a = Analisis { asignaturas: 3, preguntas: 50, ..Default::default() };
+        let r = recomendar(&a, Objetivo::Curiosidad);
+        assert_eq!(r, recomendar(&a, Objetivo::Curiosidad));
+        assert_eq!(r.len(), CATALOGO.len());
+        assert!(r.windows(2).all(|w| w[0].puntos >= w[1].puntos));
+        let mut ids: Vec<_> = r.iter().map(|x| x.id).collect();
+        ids.sort();
+        ids.dedup();
+        assert_eq!(ids.len(), CATALOGO.len());
+    }
+
+    #[test]
+    fn plazo_cercano_y_objetivo_cambian_la_puntuacion() {
+        let base = Analisis { asignaturas: 1, ..Default::default() };
+        let puntos = |a: &Analisis, o, id: &str| recomendar(a, o).into_iter().find(|r| r.id == id).unwrap().puntos;
+        let cerca = Analisis { plazo_mas_cercano: Some(5), ..base.clone() };
+        let lejos = Analisis { plazo_mas_cercano: Some(60), ..base.clone() };
+        assert_eq!(puntos(&cerca, Objetivo::Curiosidad, "recuperacion"), puntos(&lejos, Objetivo::Curiosidad, "recuperacion") + 20);
+        assert!(puntos(&base, Objetivo::Examenes, "espaciada") > puntos(&base, Objetivo::Curiosidad, "espaciada"));
+        assert!(puntos(&base, Objetivo::Proyectos, "practica") > puntos(&base, Objetivo::Examenes, "practica"));
+    }
+
+    #[test]
+    fn por_defecto_son_las_tres_primeras_y_hay_motivos() {
+        let a = Analisis { asignaturas: 4, preguntas: 300, preguntas_test: 100, ..Default::default() };
+        let r = recomendar(&a, Objetivo::Examenes);
+        let d = por_defecto(&r);
+        assert_eq!(d, r.iter().take(3).map(|x| x.id.to_string()).collect::<Vec<_>>());
+        assert!(r[0].motivos.iter().all(|m| !m.is_empty()) && !r[0].motivos.is_empty());
+        assert!(por_defecto(&[]).is_empty());
+    }
+
+    #[test]
+    fn analizar_cuenta_tipos_tests_y_plazos() {
+        use crate::modelo::{Plazo, Pregunta, Unidad};
+        let u = |id: &str, tipo: &str, notas, codigo| Unidad { id: id.into(), tipo: tipo.into(), notas, bloques_codigo: codigo, ..Default::default() };
+        let test = Pregunta { opciones: "a) x\nb) y".into(), respuesta: "**Respuesta: a)**".into(), ..Default::default() };
+        let abierta = Pregunta { respuesta: "porque sí".into(), ..Default::default() };
+        let plazo = |f: &str, e: &str| Plazo { fecha: Some(f.into()), estado: e.into(), ..Default::default() };
+        let c = Contenido {
+            unidades: vec![u("1", "clase", 5, 2), u("2", "propio", 7, 10)],
+            preguntas: vec![test, abierta],
+            plazos: vec![
+                plazo("2026-11-30", "pendiente"),
+                plazo("2026-11-20", "pendiente"),
+                plazo("2026-11-19", "entregado"),
+                plazo("2026-11-01", "pendiente"),
+            ],
+            ..Default::default()
+        };
+        let a = analizar(&c, "2026-11-18");
+        assert_eq!((a.asignaturas, a.de_clase, a.propias, a.notas, a.bloques_codigo), (2, 1, 1, 12, 12));
+        assert_eq!((a.preguntas, a.preguntas_test), (2, 1));
+        assert_eq!(a.plazo_mas_cercano, Some(2));
+        assert_eq!(analizar(&Contenido::default(), "2026-11-18"), Analisis::default());
     }
 }

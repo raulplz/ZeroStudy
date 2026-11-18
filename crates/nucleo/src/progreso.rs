@@ -186,7 +186,11 @@ pub struct Resumen {
 
 impl Resumen {
     pub fn dominio(&self) -> f64 {
-        if self.total == 0 { 0.0 } else { self.dominadas as f64 / self.total as f64 }
+        if self.total == 0 {
+            0.0
+        } else {
+            self.dominadas as f64 / self.total as f64
+        }
     }
 }
 
@@ -261,5 +265,142 @@ mod tests {
         let e = Estado::desde(&[reg("a", &[("2026-11-17T10:00:00", "q", 2)])]);
         let t = e.tarjeta("q").unwrap();
         assert_eq!((t.caja, t.proxima.as_str()), (1, "2026-11-18"));
+    }
+
+    #[test]
+    fn el_orden_de_llegada_no_importa_solo_el_instante() {
+        // El evento más antiguo llega después (otro dispositivo sincronizó tarde).
+        let a = reg("a", &[("2026-11-18T09:00:00", "q", 3)]);
+        let b = reg("b", &[("2026-11-17T09:00:00", "q", 1)]);
+        let e = Estado::desde(&[a.clone(), b.clone()]);
+        assert_eq!(e, Estado::desde(&[b, a]));
+        let t = e.tarjeta("q").unwrap();
+        assert_eq!((t.caja, t.fallos, t.aciertos, t.proxima.as_str()), (2, 1, 1, "2026-11-20"));
+        assert_eq!(t.ultima, "2026-11-18T09:00:00");
+    }
+
+    #[test]
+    fn eventos_duplicados_entre_dispositivos_cuentan_una_vez() {
+        let ev = [("2026-11-17T10:00:00", "q", 3)];
+        let e = Estado::desde(&[reg("a", &ev), reg("b", &ev)]);
+        assert_eq!(e.tarjeta("q").unwrap().aciertos, 1);
+        assert_eq!(e.por_dia.get("2026-11-17"), Some(&1));
+        // Misma pregunta y hora pero otra nota: es otro evento.
+        let e = Estado::desde(&[reg("a", &ev), reg("b", &[("2026-11-17T10:00:00", "q", 2)])]);
+        assert_eq!(e.por_dia.get("2026-11-17"), Some(&2));
+    }
+
+    #[test]
+    fn fusion_idempotente_y_registro_vacio() {
+        let a = reg("a", &[("2026-11-17T10:00:00", "q1", 3), ("2026-11-17T10:00:05", "q1", 3)]);
+        let e1 = Estado::desde(std::slice::from_ref(&a));
+        let e2 = Estado::desde(&[a.clone(), a.clone(), Registro::nuevo("vacio")]);
+        assert_eq!(e1, e2);
+        assert_eq!(e1.tarjeta("q1").unwrap().caja, 2);
+        assert_eq!(Estado::desde(&[]), Estado::default());
+    }
+
+    #[test]
+    fn la_caja_tiene_techo_y_fallar_reinicia() {
+        let evs: Vec<(String, &str, u8)> = (1..=8).map(|d| (format!("2026-11-{d:02}T10:00:00"), "q", 3)).collect();
+        let refs: Vec<(&str, &str, u8)> = evs.iter().map(|(t, p, r)| (t.as_str(), *p, *r)).collect();
+        let e = Estado::desde(&[reg("a", &refs)]);
+        let t = e.tarjeta("q").unwrap();
+        assert_eq!((t.caja, t.proxima.as_str()), (5, "2026-11-24"));
+        assert!(e.dominada("q") && !e.pendiente("q", "2026-11-23") && e.pendiente("q", "2026-11-24"));
+        let e = Estado::desde(&[reg("a", &[("2026-11-01T10:00:00", "q", 3), ("2026-11-02T10:00:00", "q", 1)])]);
+        assert_eq!(e.tarjeta("q").unwrap().caja, 1);
+        assert!(e.pendiente("q", "2026-11-02"));
+    }
+
+    #[test]
+    fn simulacros_se_ordenan_y_deduplican() {
+        let s = |t: &str, n, a| Simulacro { t: t.into(), unidades: vec!["16".into()], n, aciertos: a, segundos: 60 };
+        let mut a = Registro::nuevo("a");
+        a.simulacros = vec![s("2026-11-18T10:00:00", 10, 7), s("2026-11-17T10:00:00", 10, 5)];
+        let mut b = Registro::nuevo("b");
+        b.simulacros = vec![s("2026-11-18T10:00:00", 10, 7)];
+        let e = Estado::desde(&[a.clone(), b]);
+        assert_eq!(e.simulacros.iter().map(|x| x.aciertos).collect::<Vec<_>>(), vec![5, 7]);
+        assert_eq!(e, Estado::desde(&[a.clone(), a]));
+    }
+
+    #[test]
+    fn fechas_invalidas_no_rompen() {
+        assert_eq!(sumar_dias("basura", 3), "");
+        assert_eq!(dias_hasta("2026-11-17", "2026-11-20"), Some(3));
+        assert_eq!(dias_hasta("2026-11-17", "x"), None);
+    }
+
+    fn contenido() -> Contenido {
+        use crate::modelo::{Plazo, Pregunta};
+        let preg = |id: &str| Pregunta { id: id.into(), unidad: "16".into(), pregunta: "?".into(), respuesta: "!".into(), ..Default::default() };
+        let plazo = |f: Option<&str>, que: &str, estado: &str| Plazo {
+            fecha: f.map(Into::into),
+            unidad: "16".into(),
+            que: que.into(),
+            estado: estado.into(),
+            nota: None,
+        };
+        Contenido {
+            preguntas: vec![preg("a"), preg("b"), preg("c"), preg("d")],
+            plazos: vec![
+                plazo(Some("2026-11-10"), "pasado", "pendiente"),
+                plazo(Some("2026-11-19"), "entregado ya", "entregado"),
+                plazo(Some("2026-11-25"), "lejano", "pendiente"),
+                plazo(Some("2026-11-20"), "cercano", "pendiente"),
+                plazo(None, "sin fecha", "pendiente"),
+            ],
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn resumen_y_widget() {
+        let c = contenido();
+        let e = Estado::desde(&[reg(
+            "a",
+            &[
+                ("2026-11-16T10:00:00", "a", 3),
+                ("2026-11-17T10:00:00", "a", 3),
+                ("2026-11-18T10:00:00", "a", 3),
+                ("2026-11-18T10:01:00", "b", 1),
+                ("2026-11-17T10:00:00", "c", 2),
+            ],
+        )]);
+        let r = e.resumen(&c, "2026-11-18", |_| true);
+        assert_eq!((r.total, r.vistas, r.nuevas, r.dominadas, r.falladas), (4, 3, 1, 1, 1));
+        // a vence el 22, b hoy (fallada), c el 18 (dudada el 17).
+        assert_eq!(r.pendientes, 2);
+        assert!((r.dominio() - 0.25).abs() < 1e-9);
+        let w = e.widget(&c, "2026-11-18", "2026-11-18T12:00:00");
+        assert_eq!((w.pendientes_hoy, w.racha, w.dominio), (2, 3, 0.25));
+        let p = w.proximo_plazo.unwrap();
+        assert_eq!((p.titulo.as_str(), p.dias), ("cercano", 2));
+        assert_eq!(w.actualizado, "2026-11-18T12:00:00");
+    }
+
+    #[test]
+    fn widget_sin_datos() {
+        let w = Estado::default().widget(&Contenido::default(), "2026-11-18", "x");
+        assert_eq!((w.pendientes_hoy, w.racha, w.dominio, w.proximo_plazo), (0, 0, 0.0, None));
+        // Todos los plazos entregados o pasados: no hay próximo.
+        let mut c = contenido();
+        c.plazos.retain(|p| p.estado == "entregado" || p.fecha.as_deref() == Some("2026-11-10"));
+        assert!(Estado::default().widget(&c, "2026-11-18", "x").proximo_plazo.is_none());
+        assert_eq!(Resumen::default().dominio(), 0.0);
+    }
+
+    #[test]
+    fn registro_json_ida_y_vuelta_y_clamp() {
+        let mut r = Registro::nuevo("movil");
+        r.anotar("2026-11-18T10:00:00", "q", 9);
+        r.anotar("2026-11-18T10:00:01", "q", 0);
+        assert_eq!(r.eventos.iter().map(|e| e.r).collect::<Vec<_>>(), vec![3, 1]);
+        let t = serde_json::to_string(&r).unwrap();
+        assert_eq!(serde_json::from_str::<Registro>(&t).unwrap(), r);
+        // Registros antiguos sin simulacros se leen igual.
+        let v: Registro = serde_json::from_str(r#"{"dispositivo":"x"}"#).unwrap();
+        assert!(v.eventos.is_empty() && v.simulacros.is_empty());
     }
 }

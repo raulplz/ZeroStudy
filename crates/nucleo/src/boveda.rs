@@ -221,9 +221,7 @@ struct ArchivoConceptos {
 }
 
 pub fn conceptos(dir: &Path, unidades: &[String]) -> Conceptos {
-    let leer = |f: PathBuf| -> ArchivoConceptos {
-        fs::read_to_string(f).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default()
-    };
+    let leer = |f: PathBuf| -> ArchivoConceptos { fs::read_to_string(f).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default() };
     let mut c = Conceptos::default();
     for u in unidades {
         let d = leer(dir.join(format!("U{u}.json")));
@@ -290,11 +288,8 @@ pub fn leer(cfg: &Config, ahora: &str) -> io::Result<Contenido> {
     let ids: Vec<String> = unidades.iter().map(|u| u.id.clone()).collect();
     let mut conc = if cfg.conceptos.is_empty() { Conceptos::default() } else { conceptos(Path::new(&cfg.conceptos), &ids) };
     crate::atlas::disponer(&mut conc, &ids);
-    let nombre = if cfg.nombre_boveda.is_empty() {
-        raiz.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()
-    } else {
-        cfg.nombre_boveda.clone()
-    };
+    let nombre =
+        if cfg.nombre_boveda.is_empty() { raiz.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default() } else { cfg.nombre_boveda.clone() };
     Ok(Contenido {
         boveda: nombre,
         generado: ahora.into(),

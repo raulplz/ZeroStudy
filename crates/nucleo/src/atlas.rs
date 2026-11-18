@@ -42,13 +42,8 @@ pub fn disponer(c: &mut Conceptos, unidades: &[String]) {
     let idx: HashMap<String, usize> = c.nodos.iter().enumerate().map(|(i, x)| (x.id.clone(), i)).collect();
     let grado = grados(c);
     let r: Vec<f64> = c.nodos.iter().map(|x| radio(x.importancia, *grado.get(x.id.as_str()).unwrap_or(&0))).collect();
-    let centros: Vec<(f64, f64)> = c
-        .nodos
-        .iter()
-        .map(|x| centro(unidades.iter().position(|u| *u == x.unidad).unwrap_or(0), unidades.len().max(1)))
-        .collect();
-    let mut pos: Vec<(f64, f64)> =
-        (0..n).map(|i| (centros[i].0 + (i as f64).cos() * 60.0, centros[i].1 + (i as f64).sin() * 60.0)).collect();
+    let centros: Vec<(f64, f64)> = c.nodos.iter().map(|x| centro(unidades.iter().position(|u| *u == x.unidad).unwrap_or(0), unidades.len().max(1))).collect();
+    let mut pos: Vec<(f64, f64)> = (0..n).map(|i| (centros[i].0 + (i as f64).cos() * 60.0, centros[i].1 + (i as f64).sin() * 60.0)).collect();
     let mut vel = vec![(0.0f64, 0.0f64); n];
     let enlaces: Vec<(usize, usize, f64, f64)> = c
         .aristas

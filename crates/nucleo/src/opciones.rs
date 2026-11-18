@@ -24,10 +24,7 @@ pub fn parsear(texto: &str) -> Vec<Opcion> {
     let mut ops: Vec<Opcion> = Vec::new();
     for linea in texto.lines() {
         if let Some(c) = re_opcion().captures(linea) {
-            ops.push(Opcion {
-                letra: c[1].chars().next().unwrap().to_ascii_lowercase(),
-                texto: c[2].trim().to_string(),
-            });
+            ops.push(Opcion { letra: c[1].chars().next().unwrap().to_ascii_lowercase(), texto: c[2].trim().to_string() });
         } else if let (Some(ultima), false) = (ops.last_mut(), linea.trim().is_empty()) {
             ultima.texto.push(' ');
             ultima.texto.push_str(linea.trim());
@@ -37,10 +34,7 @@ pub fn parsear(texto: &str) -> Vec<Opcion> {
 }
 
 pub fn letra_correcta(respuesta: &str) -> Option<char> {
-    re_respuesta()
-        .captures(respuesta)
-        .and_then(|c| c[1].chars().next())
-        .map(|c| c.to_ascii_lowercase())
+    re_respuesta().captures(respuesta).and_then(|c| c[1].chars().next()).map(|c| c.to_ascii_lowercase())
 }
 
 /// Una pregunta se corrige sola si tiene al menos dos opciones y una letra correcta.
