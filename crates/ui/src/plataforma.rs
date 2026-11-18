@@ -66,6 +66,9 @@ pub struct Carga {
     /// Sugerencia de carpeta de apuntes para el primer uso (escritorio).
     #[serde(default)]
     pub sugerencia: String,
+    /// Plantilla opcional (`~/.config/zerostudy/plantilla.json`) para rellenar el asistente.
+    #[serde(default)]
+    pub plantilla: Option<Config>,
 }
 
 #[derive(Serialize)]
@@ -96,6 +99,15 @@ pub async fn cargar() -> Result<Carga, String> {
     let contenido = local_leer("zerostudy-contenido").and_then(|t| serde_json::from_str(&t).ok());
     let registros = local_leer("zerostudy-registros").and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
     Ok(Carga { config, contenido, registros, ..Default::default() })
+}
+
+/// Copia inmediata del progreso en el navegador (la subida a GitHub va con retraso).
+pub fn guardar_registros_local(todos: &[Registro]) {
+    if !escritorio() {
+        if let Ok(t) = serde_json::to_string(todos) {
+            local_guardar("zerostudy-registros", &t);
+        }
+    }
 }
 
 pub async fn guardar_config(c: &Config) -> Result<(), String> {
@@ -210,11 +222,7 @@ impl Github {
         if c.sync.repo.is_empty() || token.is_empty() {
             return Err("Falta el repo o el token de GitHub (Ajustes).".into());
         }
-        Ok(Self {
-            repo: c.sync.repo.clone(),
-            rama: if c.sync.rama.is_empty() { "main".into() } else { c.sync.rama.clone() },
-            token,
-        })
+        Ok(Self { repo: c.sync.repo.clone(), rama: if c.sync.rama.is_empty() { "main".into() } else { c.sync.rama.clone() }, token })
     }
 
     fn url(&self, ruta: &str) -> String {

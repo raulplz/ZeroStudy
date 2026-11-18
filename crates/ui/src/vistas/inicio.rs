@@ -16,7 +16,11 @@ use crate::vistas::metodos::Metodos;
 pub fn limpiar_dispositivo(s: &str) -> String {
     let v: String = s.trim().to_lowercase().chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '-' }).collect();
     let v = v.trim_matches('-').to_string();
-    if v.is_empty() { "portatil".into() } else { v }
+    if v.is_empty() {
+        "portatil".into()
+    } else {
+        v
+    }
 }
 
 /// `usuario/repo` a partir de lo que se pegue (admite la URL completa).
@@ -24,7 +28,11 @@ pub fn limpiar_repo(s: &str) -> String {
     let s = s.trim().trim_end_matches('/').trim_end_matches(".git");
     let s = s.strip_prefix("https://github.com/").or_else(|| s.strip_prefix("github.com/")).unwrap_or(s);
     let ok = s.split('/').count() == 2 && s.chars().all(|c| c.is_ascii_alphanumeric() || "-_./".contains(c));
-    if ok { s.to_string() } else { String::new() }
+    if ok {
+        s.to_string()
+    } else {
+        String::new()
+    }
 }
 
 pub fn objetivo_texto(o: Objetivo) -> (&'static str, &'static str) {
@@ -60,8 +68,12 @@ pub fn Inicio() -> impl IntoView {
         inicial.dispositivo = "movil".into();
     }
     let sug = c.sugerencia.get_untracked();
-    if !web && inicial.boveda.is_empty() && !sug.is_empty() {
-        inicial = if sug == Config::raul().boveda { Config::raul() } else { Config { boveda: sug, ..inicial } };
+    if !web && inicial.boveda.is_empty() {
+        if let Some(p) = c.plantilla.get_untracked() {
+            inicial = Config { dispositivo: inicial.dispositivo, ..p };
+        } else if !sug.is_empty() {
+            inicial = Config { boveda: sug, ..inicial };
+        }
     }
     let cfg = RwSignal::new(inicial);
     let token = RwSignal::new(plataforma::token());

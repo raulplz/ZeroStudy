@@ -18,6 +18,10 @@ pub fn config_dir() -> PathBuf {
 pub fn config() -> PathBuf {
     config_dir().join("zerostudy/config.json")
 }
+/// Plantilla opcional (fuera del repo) que rellena el asistente de primer uso.
+pub fn plantilla() -> PathBuf {
+    config_dir().join("zerostudy/plantilla.json")
+}
 pub fn tema() -> PathBuf {
     config_dir().join("zerolayer/theme.json")
 }

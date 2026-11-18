@@ -1,0 +1,10 @@
+{
+  "boveda": "/home/usuario/Documents/Apuntes",
+  "nombre_boveda": "Apuntes",
+  "asignaturas": [
+    { "id": "mates", "carpeta": "Matematicas", "titulo": "Matemáticas", "corto": "Mates", "color": "#75c4e8", "tipo": "clase" },
+    { "id": "prog", "carpeta": "Programacion", "titulo": "Programación", "corto": "Prog", "color": "#8fbea0", "tipo": "propio" }
+  ],
+  "conceptos": "",
+  "sync": { "repo": "usuario/zerostudy-datos", "rama": "main" }
+}

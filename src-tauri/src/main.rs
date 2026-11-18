@@ -6,6 +6,7 @@
 //! espera `crates/ui/src/plataforma.rs`.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod descubrir;
 mod rutas;
 mod sync;
 
@@ -44,6 +45,7 @@ struct Carga {
     tema: Option<Tema>,
     aviso: Option<String>,
     sugerencia: String,
+    plantilla: Option<Config>,
 }
 
 #[derive(Serialize)]
@@ -51,6 +53,10 @@ struct Sincronizado {
     registros: Vec<Registro>,
     contenido: Option<Contenido>,
     estado: String,
+}
+
+fn home_dir() -> std::path::PathBuf {
+    std::env::var_os("HOME").map(Into::into).unwrap_or_default()
 }
 
 fn ahora() -> String {
@@ -140,9 +146,9 @@ async fn cargar(app: Compartido<'_>) -> Result<Carga, String> {
     let app = app.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
         let (config, existia, mut aviso) = leer_config();
-        let raul = Config::raul().boveda;
-        // En el primer uso se sugiere la bóveda de Raúl si existe en este equipo.
-        let sugerencia = if !existia && Path::new(&raul).is_dir() { raul } else { String::new() };
+        // En el primer uso: plantilla opcional y, si no, una bóveda de Obsidian encontrada en el equipo.
+        let plantilla = if existia { None } else { descubrir::leer_plantilla(&rutas::plantilla()) };
+        let sugerencia = if existia || plantilla.is_some() { String::new() } else { descubrir::sugerir_boveda(&home_dir()).unwrap_or_default() };
         let contenido = if config.configurado {
             match cargar_contenido(&config) {
                 Ok(c) => Some(c),
@@ -161,7 +167,7 @@ async fn cargar(app: Compartido<'_>) -> Result<Carga, String> {
         if let Some(c) = &contenido {
             escribir_derivados(&config, c, &registros);
         }
-        Carga { config, contenido, registros, tema: leer_tema(), aviso, sugerencia }
+        Carga { config, contenido, registros, tema: leer_tema(), aviso, sugerencia, plantilla }
     })
     .await
     .map_err(|e| e.to_string())

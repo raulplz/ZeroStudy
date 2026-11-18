@@ -68,30 +68,3 @@ pub struct Sync {
 
 /// Paleta para asignaturas detectadas automáticamente.
 pub const COLORES: [&str; 8] = ["#75c4e8", "#4da3ff", "#8fbea0", "#e6bf79", "#c49bff", "#ef7180", "#dc9d70", "#9faee8"];
-
-impl Config {
-    /// Configuración de Raúl: su bóveda de la uni y sus cuatro asignaturas.
-    pub fn raul() -> Self {
-        let asig = |id: &str, titulo: &str, corto: &str, color: &str| Asignatura {
-            id: id.into(),
-            carpeta: format!("UNIT_{id}"),
-            titulo: titulo.into(),
-            corto: corto.into(),
-            color: color.into(),
-            tipo: "clase".into(),
-        };
-        Self {
-            boveda: "/home/raul-pc/Work/UNIVERSIDAD/NOTAS/Notas portátil".into(),
-            nombre_boveda: "Notas portátil".into(),
-            asignaturas: vec![
-                asig("16", "Computing Research Project", "Research", "#75c4e8"),
-                asig("28", "Cloud Computing", "Cloud", "#4da3ff"),
-                asig("47", "Emerging Technologies", "Emerging", "#8fbea0"),
-                asig("54", "Prototyping & Innovation", "Prototyping", "#e6bf79"),
-            ],
-            conceptos: "/home/raul-pc/Work/PROYECTOS/FrostStudy/datos/conceptos".into(),
-            sync: Sync { repo: "raulplz/zerostudy-datos".into(), rama: "main".into() },
-            ..Self::default()
-        }
-    }
-}

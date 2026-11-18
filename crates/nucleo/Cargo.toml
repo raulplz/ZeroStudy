@@ -10,6 +10,10 @@ default = []
 # Lector de la bóveda de Obsidian (solo escritorio: usa el sistema de archivos)
 boveda = ["dep:sha1"]
 
+[[example]]
+name = "volcar"
+required-features = ["boveda"]
+
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true

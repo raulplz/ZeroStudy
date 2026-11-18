@@ -28,6 +28,7 @@ pub struct Ctx {
     pub cargado: RwSignal<bool>,
     pub error: RwSignal<Option<String>>,
     pub sugerencia: RwSignal<String>,
+    pub plantilla: RwSignal<Option<Config>>,
     pub cambios: StoredValue<u32>,
 }
 
@@ -85,6 +86,8 @@ impl Ctx {
         let n = self.cambios.get_value() + 1;
         self.cambios.set_value(n);
         self.guardado.set("GUARDANDO…".into());
+        // En el móvil el sistema puede cerrar la pestaña antes de la subida: copia local ya.
+        plataforma::guardar_registros_local(&self.registros.get_untracked());
         let c = *self;
         let espera = if plataforma::escritorio() { 600 } else { 4000 };
         set_timeout(
@@ -148,6 +151,7 @@ impl Ctx {
                         c.tema.set(t);
                     }
                     c.sugerencia.set(carga.sugerencia);
+                    c.plantilla.set(carga.plantilla);
                     c.error.set(carga.aviso);
                 }
                 Err(e) => c.error.set(Some(e)),
@@ -177,6 +181,7 @@ pub fn App() -> impl IntoView {
         cargado: RwSignal::new(false),
         error: RwSignal::new(None),
         sugerencia: RwSignal::new(String::new()),
+        plantilla: RwSignal::new(None),
         cambios: StoredValue::new(0),
     };
     provide_context(c);

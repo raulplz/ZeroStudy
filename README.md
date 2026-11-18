@@ -31,10 +31,14 @@ Requisitos: Rust estable con el target `wasm32-unknown-unknown`, `trunk` y `carg
 rustup target add wasm32-unknown-unknown
 cargo install trunk cargo-tauri --locked
 
-cargo test -p zerostudy-nucleo --features boveda     # tests del núcleo
+cargo test --workspace --features zerostudy-nucleo/boveda   # tests (núcleo y sincronización)
 cd crates/ui && trunk build --release                # PWA en crates/ui/dist
 cd ../../src-tauri && cargo tauri build --no-bundle  # binario en target/release/zerostudy
 ```
+
+Pruebas de la PWA en navegador (Chromium y WebKit, escritorio y móvil 390×844, con la API de GitHub simulada):
+`cd crates/ui && trunk build && cd ../.. && uv run --with playwright python tests/e2e/run.py all`
+(WebKit: `uv run --with playwright python -m playwright install webkit`). Más detalle en [tests/e2e/README.md](tests/e2e/README.md).
 
 Para desarrollar la interfaz sin Tauri: `cd crates/ui && trunk serve` y abre <http://localhost:1420>.
 
@@ -44,6 +48,9 @@ Al abrirla por primera vez, un asistente de tres pasos pregunta dónde están tu
 de clase y cuáles propias, para qué estudias y qué metodologías activar (vienen preseleccionadas las que
 mejor encajan con tu material). Todo se puede cambiar luego en **Ajustes**.
 
+- En escritorio, el asistente sugiere una bóveda de Obsidian que encuentre en `~/Documents`, `~/Obsidian` o bajo una carpeta `NOTAS` de `~/Work`.
+  Si existe `~/.config/zerostudy/plantilla.json` (misma forma que `config.json`; ejemplo en [docs/plantilla.ejemplo.json](docs/plantilla.ejemplo.json)),
+  rellena el asistente con sus valores. La plantilla vive fuera del repo.
 - Cada subcarpeta de la carpeta de apuntes es una asignatura o tema. Una pregunta es un callout `> [!question]-`.
 - ZeroStudy solo escribe en tu carpeta la nota `00 - Progreso de repaso.md`.
 - Configuración: `~/.config/zerostudy/config.json`. Progreso: `~/.local/share/zerostudy/progreso/<dispositivo>.json`.
@@ -57,7 +64,7 @@ El progreso es un **registro de eventos por dispositivo**: cada dispositivo escr
 (`progreso/<dispositivo>.json`), así que no hay conflictos al sincronizar y el estado de cada tarjeta se
 reconstruye reproduciendo los eventos de todos.
 
-1. Crea un repo **privado** de datos (por ejemplo `raulplz/zerostudy-datos`) y escribe `usuario/repo` en el asistente o en Ajustes.
+1. Crea un repo **privado** de datos (por ejemplo `usuario/zerostudy-datos`) y escribe `usuario/repo` en el asistente o en Ajustes.
 2. **Escritorio:** usa el token de `gh auth token` (inicia sesión antes con `gh auth login`). Sube `contenido.json` cuando cambian tus apuntes y tu progreso, y baja el de los demás dispositivos.
 3. **iPhone (PWA):** sirve `crates/ui/dist` por HTTPS (por ejemplo con GitHub Pages desde este repo, que solo lleva código), ábrelo en Safari y usa *Compartir → Añadir a pantalla de inicio*.
    En el asistente pon el repo y un **token fino** (*fine-grained personal access token*) limitado a ese único repo privado con el permiso
