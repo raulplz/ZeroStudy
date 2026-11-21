@@ -241,9 +241,9 @@ pub fn App() -> impl IntoView {
 fn Armazon() -> impl IntoView {
     let c = ctx();
     let vista = move || c.ruta.with(|r| r.split('?').next().unwrap_or("panel").to_string());
-    let enlace = move |id: &'static str, nombre: &'static str, icono: &'static str| {
+    let enlace = move |id: &'static str, nombre: &'static str, corto: &'static str, icono: &'static str| {
         view! {
-            <a href=format!("#/{id}") class:activa=move || vista() == id on:click=move |_| {
+            <a href=format!("#/{id}") class=format!("tab-{id}") class:activa=move || vista() == id on:click=move |_| {
                 // En la pantalla final de una sesión la ruta ya es «#/repaso»: el hash no cambia, no salta
                 // `hashchange` y la vista seguiría igual. Al pulsar «Repaso» se vuelve al selector.
                 if id == "repaso" && c.repaso.with_untracked(|s| s.as_ref().is_some_and(|s| s.i >= s.cola.len())) {
@@ -251,7 +251,8 @@ fn Armazon() -> impl IntoView {
                 }
             }>
                 <span class="icono" inner_html=icono></span>
-                <span>{nombre}</span>
+                <span class="largo">{nombre}</span>
+                <span class="corto">{corto}</span>
                 {(id == "repaso").then(|| view! {
                     <b class="insignia">{move || {
                         let n = c.contenido.with(|x| x.as_ref().map(|x| c.estado.with(|e| e.resumen(x, &hoy(), |_| true).pendientes)).unwrap_or(0));
@@ -268,12 +269,12 @@ fn Armazon() -> impl IntoView {
                 <span class="marca-sub">{move || format!("SYS://{} · {}", c.tema.with(|t| t.nombre.to_uppercase()), c.config.with(|x| x.dispositivo.to_uppercase()))}</span>
             </a>
             <nav>
-                {enlace("panel", "Panel", ICONO_PANEL)}
-                {enlace("temas", "Elegir tema", ICONO_TEMAS)}
-                {enlace("repaso", "Repaso", ICONO_REPASO)}
-                {enlace("atlas", "Atlas", ICONO_ATLAS)}
-                {enlace("unidades", "Asignaturas", ICONO_UNIDADES)}
-                {enlace("ajustes", "Ajustes", ICONO_AJUSTES)}
+                {enlace("panel", "Panel", "Panel", ICONO_PANEL)}
+                {enlace("temas", "Elegir tema", "Temas", ICONO_TEMAS)}
+                {enlace("repaso", "Repaso", "Repasar", ICONO_REPASO)}
+                {enlace("atlas", "Atlas", "Atlas", ICONO_ATLAS)}
+                {enlace("unidades", "Asignaturas", "Asignaturas", ICONO_UNIDADES)}
+                {enlace("ajustes", "Ajustes", "Ajustes", ICONO_AJUSTES)}
             </nav>
             {move || c.metodo("pomodoro").then(|| view! { <vistas::pomodoro::Pomodoro/> })}
             <div class="lateral-pie">
@@ -284,6 +285,15 @@ fn Armazon() -> impl IntoView {
                 <div class="mono tenue">"◢ ZERØ / " {move || c.config.with(|x| x.dispositivo.to_uppercase())}</div>
             </div>
         </aside>
+        // Solo en móvil: barra superior que respeta el notch (la lateral pasa a pestañas abajo).
+        <header class="barra-movil">
+            <a class="marca-logo" href="#/panel">"ZER"<span>"Ø"</span></a>
+            <span class="mono barra-movil-estado">{move || c.guardado.get()}</span>
+            <a class="barra-movil-boton" class:activa=move || vista() == "unidades" href="#/unidades" title="Asignaturas" aria-label="Asignaturas" inner_html=ICONO_UNIDADES></a>
+            {move || (!c.config.with(|x| x.sync.repo.is_empty())).then(|| view! {
+                <button class="barra-movil-boton" title="Sincronizar" aria-label="Sincronizar" on:click=move |_| c.sincronizar() inner_html=ICONO_SYNC></button>
+            })}
+        </header>
         <main class="vista" tabindex="-1">
             {move || c.error.get().map(|e| view! { <div class="panel aviso">"⚠ " {e}</div> })}
             {move || {
@@ -308,4 +318,5 @@ const ICONO_TEMAS: &str = r#"<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r=
 const ICONO_REPASO: &str = r#"<svg viewBox="0 0 24 24"><path d="M4 5h12l4 4v10H4z"/><path d="M8 12h8M8 16h5"/></svg>"#;
 const ICONO_ATLAS: &str = r#"<svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="9" cy="18" r="2.5"/><circle cx="19" cy="19" r="1.8"/><path d="M8 7l8 1M7.5 8l1 7.5M11 17l6-7.5M11.4 18.3l5.8.6"/></svg>"#;
 const ICONO_UNIDADES: &str = r#"<svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>"#;
+const ICONO_SYNC: &str = r#"<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.7-4.4M4 4v4h4M4 13a8 8 0 0 0 14.7 4.4M20 20v-4h-4"/></svg>"#;
 const ICONO_AJUSTES: &str = r#"<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>"#;

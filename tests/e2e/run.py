@@ -92,6 +92,23 @@ def sin_desborde(page, donde):
     comprobar(d <= 1, f"{donde}: sin scroll horizontal (desborde {d}px)")
 
 
+def zonas_seguras(page, donde):
+    """En móvil: nada interactivo ni de contenido por encima del notch (47 px) ni bajo el indicador de inicio (34 px)."""
+    page.evaluate("() => scrollTo(0, 0)")
+    page.wait_for_timeout(150)
+    r = page.evaluate("""() => {
+      const h = innerHeight, m = s => document.querySelector(s)?.getBoundingClientRect();
+      const barra = m('.barra-movil .marca-logo'), nav = m('nav'), vista = document.querySelector('.vista');
+      const primero = [...vista.children].find(e => e.offsetHeight)?.getBoundingClientRect();
+      const tabs = [...document.querySelectorAll('nav a')].filter(a => a.offsetWidth).map(a => a.getBoundingClientRect().height);
+      return { barra: barra?.top ?? -1, contenido: primero?.top ?? -1, navFondo: nav ? h - nav.bottom : -1,
+               tabs: tabs.length, tabMin: Math.min(...tabs) };
+    }""")
+    comprobar(r["barra"] >= 47 and r["contenido"] >= 47 + 50, f"{donde}: cabecera y contenido bajo el notch ({r})")
+    comprobar(r["navFondo"] >= 34, f"{donde}: pestañas por encima del indicador de inicio ({r['navFondo']}px)")
+    comprobar(r["tabs"] == 5 and r["tabMin"] >= 44, f"{donde}: 5 pestañas táctiles de 44 px o más")
+
+
 def asistente(page, base, gh, etiqueta):
     page.goto(base)
     page.wait_for_selector("text=Dónde están tus apuntes", timeout=30000)
@@ -257,6 +274,10 @@ def correr(p, nombre, base, movil):
     ctx = nav.new_context(service_workers="block", **kw)
     gh = GitHub()
     ctx.route("https://api.github.com/**", gh.manejar)
+    if movil:
+        # Simula las zonas seguras de un iPhone con notch (env() no existe fuera de iOS).
+        ctx.add_init_script("document.addEventListener('DOMContentLoaded', () => { const s = document.documentElement.style;"
+                            " s.setProperty('--sa-t', '47px'); s.setProperty('--sa-b', '34px'); })")
     page = ctx.new_page()
     errores = []
     page.on("pageerror", lambda e: errores.append(str(e)))
@@ -265,6 +286,8 @@ def correr(p, nombre, base, movil):
     try:
         asistente(page, base, gh, etiqueta)
         sin_desborde(page, "panel")
+        if movil:
+            zonas_seguras(page, "panel")
         repaso(page, etiqueta)
         simulacro(page, gh, etiqueta)
         vistas(page, etiqueta)
